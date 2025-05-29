@@ -11,11 +11,11 @@ pub struct Armor
 
 impl Armor
 {
-	pub fn new(armor_name: String, resistance_force: u32, armor_hp: u32, armor_max_hp: u32) -> Result<Armor, String>
+	pub fn new(armor_name: String, resistance_force: u32, armor_hp: u32, armor_max_hp: u32) -> Result<Self, String>
 	{
 		if armor_hp > armor_max_hp { return Err(String::from("Armor HP is greater than max HP")) }
 
-		Ok(Armor {
+		Ok(Self {
 			armor_name,
 			resistance_force,
 			armor_hp,

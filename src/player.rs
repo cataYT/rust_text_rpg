@@ -1,17 +1,27 @@
-use std::collections::HashMap;
-use std::io::Write;
-use std::ops::Add;
-use std::sync::MutexGuard;
-use rand::Rng;
-use rand::rngs::ThreadRng;
+use std::{
+	io::Write,
+	ops::Add,
+	sync::MutexGuard
+};
+
+use rand::{
+	Rng,
+	rngs::ThreadRng
+};
+
+use crate::{
+	weapon,
+	armor,
+	player_manager::PlayerManager
+};
+
 use armor::Armor;
-use crate::armor;
-use crate::player_manager::PlayerManager;
+use weapon::Weapon;
 
 #[derive(Clone)]
 pub struct Player
 {
-	weapons: HashMap<String, u32>,
+	weapons: Vec<Weapon>,
 	is_wearing_armor: bool,
 	pub plr_name: String,
 	pub plr_hp: u32,
@@ -20,13 +30,13 @@ pub struct Player
 
 impl Player
 {
-	pub fn new(plr_name: String, plr_hp: u32, weapons: HashMap<String, u32>, plr_armor: &Armor) -> Player
+	pub fn new(plr_name: String, plr_hp: u32, weapon: Weapon, plr_armor: &Armor) -> Self
 	{
-		Player
+		Self
 		{
 			plr_name,
 			plr_hp,
-			weapons,
+			weapons: vec![weapon],
 			is_wearing_armor: false,
 			plr_armor: plr_armor.clone(),
 		}
@@ -36,23 +46,31 @@ impl Player
 	{
 		println!("----GETTING STATS FOR {}----", self.plr_name);
 		println!("Name: {}, Health: {}, Weapons:\n\n", self.plr_name, self.plr_hp);
-		for (key, value) in &self.weapons
+		for weapon in &self.weapons
 		{
-			println!("{} : {}", key, value);
+			println!("{} : {}", weapon.get_name(), weapon.get_damage());
 		}
 		println!("\nTotal weapons count: {}", self.weapons.len());
 		println!("----STATS END----");
 	}
 
-	pub fn update_weapons(&mut self, state_type: &str, value: (String, u32))
+	pub fn update_weapons(&mut self, state_type: &str, weapon: Weapon)
 	{
 		match state_type
 		{
 			"add" => {
-				self.weapons.insert(value.0, value.1);
+				self.weapons.push(weapon);
 			}
 			"remove" => {
-				self.weapons.remove(&value.0);
+				let mut remove_index: usize = 0;
+				for (i, wweapon) in self.weapons.iter().enumerate()
+				{
+					if wweapon.get_name() == weapon.get_name()
+					{
+						remove_index = i;
+					}
+				}
+				self.weapons.remove(remove_index);
 			}
 			_ => {}
 		}
@@ -75,13 +93,21 @@ impl Player
 		damage
 	}
 
-	pub fn attack(&self, target: &mut Player, weapon_name: &str)
+	pub fn attack(&mut self, target: &mut Player, weapon_name: &str)
 	{
-		let weapon_dmg_option: Option<&u32> = self.weapons.get(weapon_name);
+		let mut weapon_dmg_option: Option<u32> = None;
+		for weapon in &mut self.weapons
+		{
+			if weapon.get_name() == weapon_name
+			{
+				weapon_dmg_option = Some(weapon.get_damage());
+				weapon.use_weapon(weapon_dmg_option.unwrap() / 10u32);
+			}
+		}
 		let mut weapon_dmg: u32 = 0;
 		match weapon_dmg_option
 		{
-			Some(dmg) => weapon_dmg = *dmg,
+			Some(dmg) => weapon_dmg = dmg,
 			None => {
 				std::io::stdout().flush().expect("Failed to flush stdout");
 				println!("Weapon {weapon_name} does not exist")
@@ -98,10 +124,7 @@ impl Player
 		}
 	}
 
-	pub fn heal(target: &mut Player, amount: u32)
-	{
-		target.plr_hp += amount;
-	}
+	pub fn heal(target: &mut Player, amount: u32) { target.plr_hp += amount; }
 
 	pub fn equip_armor(&mut self, armor: Armor)
 	{

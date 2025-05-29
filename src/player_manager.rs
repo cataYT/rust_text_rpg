@@ -8,9 +8,9 @@ pub struct PlayerManager
 
 impl PlayerManager
 {
-	fn new() -> PlayerManager
+	fn new() -> Self
 	{
-		PlayerManager { players: Vec::new() }
+		Self { players: Vec::new() }
 	}
 
 	pub fn instance() -> &'static Mutex<PlayerManager> 
@@ -19,20 +19,14 @@ impl PlayerManager
 		INSTANCE.get_or_init(|| Mutex::new(PlayerManager::new()))
 	}
 	
-	pub fn add_player(&mut self, plr: Player)
-	{
-		self.players.push(plr)
-	}
+	pub fn add_player(&mut self, plr: Player) { self.players.push(plr) }
 
 	pub fn remove_player(&mut self, plr: &Player)
 	{
 		self.players.retain(|p| p.plr_name != plr.plr_name)
 	}
 
-	pub fn get_total_players(&self) -> usize
-	{
-		self.players.len()
-	}
+	pub fn get_total_players(&self) -> usize { self.players.len() }
 
 	pub fn get_winner(&self) -> Option<&Player>
 	{
